@@ -1,2 +1,4 @@
 *.log
 settings.py
+__pycache__
+images
