@@ -23,7 +23,7 @@ def greet_user(bot, update, user_data):
 
 
 def talk_to_me(bot, update, user_data):
-    user_text = "Привет {} {}! Ты написал: {}".format(update.message.chat.first_name, user_data['emo'],
+    user_text = "Привет {} {}! Ты написал: {}, но зачем?".format(update.message.chat.first_name, user_data['emo'],
                 update.message.text)
     logging.info("User: %s, Chat ud: %s, Message: %s", update.message.chat.username,
                 update.message.chat.id, update.message.text)
@@ -59,14 +59,15 @@ def get_user_emo(user_data):
         return user_data['emo']
 
 def get_keyboard():
-    contact_button = KeyboardButton('Прислать контакты', request_contact=True)
-    location_button = KeyboardButton('Прислать координаты', request_location=True)
+    #contact_button = KeyboardButton('Прислать контакты', request_contact=True)
+    #location_button = KeyboardButton('Прислать координаты', request_location=True)
     my_keyboard = ReplyKeyboardMarkup([
                                         ['Лягушку мне!', 'Сменить аватарку'],
-                                        [contact_button, location_button]
+                                        #[contact_button, location_button]
                                     ], resize_keyboard=True
                                 )
     return my_keyboard
+
 
 def main():
     mybot = Updater(settings.API_KEY)
@@ -78,8 +79,8 @@ def main():
     dp.add_handler(CommandHandler('frog', send_frog_picture, pass_user_data=True))
     dp.add_handler(RegexHandler('^(Лягушку мне!)$', send_frog_picture, pass_user_data=True))
     dp.add_handler(RegexHandler('^(Сменить аватарку)$', change_avatar, pass_user_data=True))
-    dp.add_handler(MessageHandler(Filters.contact, get_contact, pass_user_data=True))
-    dp.add_handler(MessageHandler(Filters.location, get_location, pass_user_data=True))
+    #dp.add_handler(MessageHandler(Filters.contact, get_contact, pass_user_data=True))
+    #dp.add_handler(MessageHandler(Filters.location, get_location, pass_user_data=True))
 
     dp.add_handler(MessageHandler(Filters.text, talk_to_me, pass_user_data=True))
 
