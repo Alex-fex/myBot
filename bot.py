@@ -1,7 +1,9 @@
 from glob import glob
 import logging
+import os
 from random import choice
 
+from clarifai.rest import ClarifaiApp
 from emoji import emojize
 from telegram import ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, RegexHandler, Filters 
@@ -20,6 +22,21 @@ def greet_user(bot, update, user_data):
     user_data['emo'] = emo
     text = 'Привет  {}'.format(emo)
     update.message.reply_text(text, reply_markup=get_keyboard())
+
+
+def check_user_photo(bot, update, user_data):
+    update.message.reply_text("Погодика")
+    os.makedirs('downloads', exist_ok=True)
+    photo_file = bot.getFile(update.message.photo[-1].file_id)
+    filename = os.path.join('downloads', '{}.jpg'.format(photo_file.file_id))
+    photo_file.download(filename)
+    if is_frog(filename):
+        update.message.reply_text("Обнаружена лягушка, теперь у нас на 1 больше.")
+        new_filename = os.path.join('images', 'frog_{}.jpg'.format(photo_file.file_id))
+        os.rename(filename, new_filename)
+    else:
+        update.message.reply_text("Это определенно не лягушка!")
+        os.remove(filename)
 
 
 def talk_to_me(bot, update, user_data):
@@ -69,6 +86,18 @@ def get_keyboard():
     return my_keyboard
 
 
+def is_frog(file_name):
+    image_has_frog = False
+    app = ClarifaiApp(api_key=settings.CLARIFAI_API_KEY)
+    model = app.public_models.general_model
+    response = model.predict_by_filename(file_name, max_concepts=5)
+    if response['status']['code'] == 10000:
+        for concept in response['outputs'][0]['data']['concepts']:
+            if concept['name'] == 'frog':
+                image_has_frog = True
+    return image_has_frog
+    
+
 def main():
     mybot = Updater(settings.API_KEY)
 
@@ -81,10 +110,12 @@ def main():
     dp.add_handler(RegexHandler('^(Сменить аватарку)$', change_avatar, pass_user_data=True))
     #dp.add_handler(MessageHandler(Filters.contact, get_contact, pass_user_data=True))
     #dp.add_handler(MessageHandler(Filters.location, get_location, pass_user_data=True))
+    dp.add_handler(MessageHandler(Filters.photo, check_user_photo, pass_user_data=True))
 
     dp.add_handler(MessageHandler(Filters.text, talk_to_me, pass_user_data=True))
 
     mybot.start_polling()
     mybot.idle()
+
 
 main()
